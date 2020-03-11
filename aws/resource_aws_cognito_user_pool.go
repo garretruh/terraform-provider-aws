@@ -161,6 +161,10 @@ func resourceAwsCognitoUserPool() *schema.Resource {
 								cognitoidentityprovider.EmailSendingAccountTypeDeveloper,
 							}, false),
 						},
+						"from": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
 					},
 				},
 			},
@@ -558,6 +562,10 @@ func resourceAwsCognitoUserPoolCreate(d *schema.ResourceData, meta interface{}) 
 				emailConfigurationType.EmailSendingAccount = aws.String(v.(string))
 			}
 
+			if v, ok := config["from"]; ok && v.(string) != "" {
+				emailConfigurationType.From = aws.String(v.(string))
+			}
+
 			params.EmailConfiguration = emailConfigurationType
 		}
 	}
@@ -849,6 +857,10 @@ func resourceAwsCognitoUserPoolUpdate(d *schema.ResourceData, meta interface{}) 
 
 			if v, ok := config["email_sending_account"]; ok && v.(string) != "" {
 				emailConfigurationType.EmailSendingAccount = aws.String(v.(string))
+			}
+
+			if v, ok := config["from"]; ok && v.(string) != "" {
+				emailConfigurationType.From = aws.String(v.(string))
 			}
 
 			params.EmailConfiguration = emailConfigurationType

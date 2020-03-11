@@ -331,13 +331,18 @@ func TestAccAWSCognitoUserPool_withEmailConfiguration(t *testing.T) {
 		t.Skip("'TEST_AWS_SES_VERIFIED_EMAIL_ARN' not set, skipping test.")
 	}
 
+	from, ok := os.LookupEnv("TEST_AWS_SES_VERIFIED_EMAIL_ADDRESS")
+	if !ok {
+		t.Skip("'TEST_AWS_SES_VERIFIED_EMAIL_ADDRESS' not set, skipping test.")
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t); testAccPreCheckAWSCognitoIdentityProvider(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAWSCognitoUserPoolDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSCognitoUserPoolConfig_withEmailConfiguration(name, "", "", "COGNITO_DEFAULT"),
+				Config: testAccAWSCognitoUserPoolConfig_withEmailConfiguration(name, "", "", "COGNITO_DEFAULT", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "email_configuration.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "email_configuration.0.reply_to_email_address", ""),
@@ -350,12 +355,13 @@ func TestAccAWSCognitoUserPool_withEmailConfiguration(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccAWSCognitoUserPoolConfig_withEmailConfiguration(name, replyTo, sourceARN, "DEVELOPER"),
+				Config: testAccAWSCognitoUserPoolConfig_withEmailConfiguration(name, replyTo, sourceARN, "DEVELOPER", from),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "email_configuration.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "email_configuration.0.reply_to_email_address", replyTo),
 					resource.TestCheckResourceAttr(resourceName, "email_configuration.0.email_sending_account", "DEVELOPER"),
 					resource.TestCheckResourceAttr(resourceName, "email_configuration.0.source_arn", sourceARN),
+					resource.TestCheckResourceAttr(resourceName, "email_configuration.0.from", from),
 				),
 			},
 		},
@@ -1041,7 +1047,7 @@ resource "aws_cognito_user_pool" "test" {
 `, name, tagKey1, tagValue1, tagKey2, tagValue2)
 }
 
-func testAccAWSCognitoUserPoolConfig_withEmailConfiguration(name, email, arn, account string) string {
+func testAccAWSCognitoUserPoolConfig_withEmailConfiguration(name, email, arn, account, from string) string {
 	return fmt.Sprintf(`
 resource "aws_cognito_user_pool" "test" {
     name = "terraform-test-pool-%[1]s"
@@ -1051,8 +1057,9 @@ resource "aws_cognito_user_pool" "test" {
       reply_to_email_address = %[2]q
       source_arn = %[3]q
       email_sending_account = %[4]q
+      from = %[5]q
     }
-  }`, name, email, arn, account)
+  }`, name, email, arn, account, from)
 }
 
 func testAccAWSCognitoUserPoolConfig_withSmsConfiguration(name string) string {

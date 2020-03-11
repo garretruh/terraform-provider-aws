@@ -2538,6 +2538,10 @@ func flattenCognitoUserPoolEmailConfiguration(s *cognitoidentityprovider.EmailCo
 		m["email_sending_account"] = *s.EmailSendingAccount
 	}
 
+	if s.From != nil {
+		m["from"] = *s.From
+	}
+
 	if len(m) > 0 {
 		return []map[string]interface{}{m}
 	}
